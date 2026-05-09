@@ -7,10 +7,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const TOKEN_KEY = '@campuscare_jwt';
 const USER_KEY = '@campuscare_user';
 
-const API_BASE =
-  process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+// Normalize base URL so paths like `/api/auth/login` never become `//api/...`
+const rawBase = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE = String(rawBase).trim().replace(/\/+$/, '');
 
 export async function saveSession(token, user) {
+  if (
+    !token ||
+    typeof token !== 'string' ||
+    !user ||
+    typeof user !== 'object' ||
+    !user.role
+  ) {
+    throw new Error('Invalid session data from server.');
+  }
   await AsyncStorage.multiSet([
     [TOKEN_KEY, token],
     [USER_KEY, JSON.stringify(user)],
@@ -46,10 +56,24 @@ async function request(path, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (e) {
+    const isNetworkFailure =
+      e instanceof TypeError ||
+      (typeof e?.message === 'string' &&
+        /network|failed to fetch/i.test(e.message));
+    const msg = isNetworkFailure
+      ? `Cannot reach API at ${API_BASE}. Check EXPO_PUBLIC_API_URL and that the backend is running.`
+      : e?.message || 'Network error';
+    const err = new Error(msg);
+    err.cause = e;
+    throw err;
+  }
 
   const text = await res.text();
   let data = {};
