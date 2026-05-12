@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { clearSession, logoutRequest } from '../services/api';
 
-export default function ManagerDashboard({ onLogout }) {
+export default function ManagerDashboard({ navigation , onLogout }) {
   const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
@@ -22,6 +22,13 @@ export default function ManagerDashboard({ onLogout }) {
     <View style={styles.container}>
       <Text style={styles.title}>Facility manager dashboard</Text>
       <Text style={styles.body}>Assign and manage maintenance issues.</Text>
+      <TouchableOpacity
+      style={styles.assignButton}
+      onPress={() => navigation.navigate("AssignIssue")}
+      >
+        <Text style={styles.assignButtonText}>Assign Issue</Text>
+        </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
         onPress={handleLogout}
@@ -50,4 +57,19 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  
+  assignButton: {
+  backgroundColor: "#2d6cdf",
+  paddingVertical: 14,
+  borderRadius: 10,
+  alignItems: "center",
+  maxWidth: 200,
+  marginBottom: 16,
+},
+assignButtonText: {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "600",
+},
 });
+

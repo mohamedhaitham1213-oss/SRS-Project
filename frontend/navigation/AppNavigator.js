@@ -10,6 +10,7 @@ import WorkerDashboard from '../screens/WorkerDashboard';
 import AdminDashboard from '../screens/AdminDashboard';
 import MyIssuesScreen from '../screens/MyIssuesScreen';
 import IssueDetailsScreen from '../screens/IssueDetailsScreen';
+import AssignIssueScreen from "../screens/AssignIssueScreen";
 
 import { getToken, getStoredUser } from '../services/api';
 
@@ -139,6 +140,13 @@ export default function AppNavigator() {
           />
         )}
       </Stack.Screen>
+
+      <Stack.Screen
+      name="AssignIssue"
+      component={AssignIssueScreen}
+      options={{ title: "Assign Issue" }}
+      />
+      
     </Stack.Navigator>
   );
 }
