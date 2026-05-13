@@ -44,3 +44,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`CampusCare API listening on port ${PORT}`);
 });
+
+const updateRoutes = require("./routes/update");
+app.use("/api/issues", updateRoutes);

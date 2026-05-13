@@ -109,81 +109,8 @@ function IssueCard({ issue, onPress }) {
   );
 }
 
-export default function ManagerDashboard({ navigation, onLogout }) {
-  const [issues, setIssues] = useState([]);
-  const [searchText, setSearchText] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('DESC');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchText.trim());
-    }, 350);
-
-    return () => clearTimeout(timer);
-  }, [searchText]);
-
-  async function loadIssues(showFullLoader = true) {
-    try {
-      if (showFullLoader) {
-        setIsLoading(true);
-      }
-
-      setErrorMessage('');
-
-      const response = await getIssuesRequest({
-        status: statusFilter,
-        category: categoryFilter,
-        search: debouncedSearch,
-        sortBy,
-        sortOrder,
-      });
-
-      setIssues(response.data || []);
-    } catch (error) {
-      setErrorMessage(error.message || 'Could not load issues.');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }
-
-  useEffect(() => {
-    loadIssues(true);
-  }, [statusFilter, categoryFilter, debouncedSearch, sortBy, sortOrder]);
-
-  const summary = useMemo(() => {
-    return issues.reduce(
-      (totals, issue) => {
-        const status = String(issue.status || 'Pending').toLowerCase();
-
-        totals.total += 1;
-
-        if (status.includes('progress')) {
-          totals.inProgress += 1;
-        } else if (status.includes('resolved') || status.includes('closed')) {
-          totals.resolved += 1;
-        } else {
-          totals.pending += 1;
-        }
-
-        return totals;
-      },
-      { total: 0, pending: 0, inProgress: 0, resolved: 0 }
-    );
-  }, [issues]);
-
-  async function handleRefresh() {
-    setIsRefreshing(true);
-    await loadIssues(false);
-  }
+export default function ManagerDashboard({ onLogout }) {
+  const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -198,162 +125,22 @@ export default function ManagerDashboard({ navigation, onLogout }) {
     }
   }
 
-  function clearFilters() {
-    setSearchText('');
-    setDebouncedSearch('');
-    setStatusFilter('all');
-    setCategoryFilter('');
-    setSortBy('date');
-    setSortOrder('DESC');
-  }
-
-  function openIssueDetails(issue) {
-    navigation.navigate('IssueDetails', {
-      issueId: issue.id,
-      title: issue.title,
-    });
-  }
-
-  function renderHeader() {
-    return (
-      <View>
-        <View style={styles.header}>
-          <View style={styles.headerTextBox}>
-            <Text style={styles.screenTitle}>Facility Manager</Text>
-            <Text style={styles.screenSubtitle}>
-              Review, search, and sort all reported campus issues.
-            </Text>
-          </View>
-
-          <Pressable
-            style={[styles.logoutButton, isLoggingOut && styles.buttonDisabled]}
-            onPress={handleLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.logoutText}>Log out</Text>
-            )}
-          </Pressable>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <SummaryTile label="Total" value={summary.total} />
-          <SummaryTile label="Pending" value={summary.pending} />
-          <SummaryTile label="In progress" value={summary.inProgress} />
-          <SummaryTile label="Resolved" value={summary.resolved} />
-        </View>
-
-        <View style={styles.filtersPanel}>
-          <TextInput
-            style={styles.searchInput}
-            value={searchText}
-            onChangeText={setSearchText}
-            placeholder="Search by title, location, category, or issue number"
-            placeholderTextColor="#9CA3AF"
-            returnKeyType="search"
-          />
-
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Status</Text>
-            <View style={styles.chipRow}>
-              {STATUS_OPTIONS.map((status) => (
-                <FilterChip
-                  key={status}
-                  label={status === 'all' ? 'All' : status}
-                  selected={statusFilter === status}
-                  onPress={() => setStatusFilter(status)}
-                />
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Category</Text>
-            <TextInput
-              style={styles.compactInput}
-              value={categoryFilter}
-              onChangeText={setCategoryFilter}
-              placeholder="All categories"
-              placeholderTextColor="#9CA3AF"
-              returnKeyType="search"
-            />
-          </View>
-
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Sort by</Text>
-            <View style={styles.chipRow}>
-              {SORT_OPTIONS.map((option) => (
-                <FilterChip
-                  key={option.value}
-                  label={option.label}
-                  selected={sortBy === option.value}
-                  onPress={() => setSortBy(option.value)}
-                />
-              ))}
-
-              <FilterChip
-                label={sortOrder === 'DESC' ? 'Newest first' : 'Oldest first'}
-                selected
-                onPress={() =>
-                  setSortOrder((current) =>
-                    current === 'DESC' ? 'ASC' : 'DESC'
-                  )
-                }
-              />
-            </View>
-          </View>
-
-          <Pressable style={styles.clearButton} onPress={clearFilters}>
-            <Text style={styles.clearButtonText}>Clear filters</Text>
-          </Pressable>
-        </View>
-
-        {errorMessage ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
-            <Pressable style={styles.retryButton} onPress={() => loadIssues(true)}>
-              <Text style={styles.retryText}>Try Again</Text>
-            </Pressable>
-          </View>
-        ) : null}
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.screen}>
-      <FlatList
-        data={issues}
-        keyExtractor={(item) => String(item.id)}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={
-          issues.length === 0 ? styles.emptyList : styles.list
-        }
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-        }
-        renderItem={({ item }) => (
-          <IssueCard issue={item} onPress={() => openIssueDetails(item)} />
+    <View style={styles.container}>
+      <Text style={styles.title}>Facility manager dashboard</Text>
+      <Text style={styles.body}>Assign and manage maintenance issues.</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleLogout}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Log out</Text>
         )}
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.emptyBox}>
-              <ActivityIndicator size="large" />
-              <Text style={styles.loadingText}>Loading issues...</Text>
-            </View>
-          ) : (
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyTitle}>No matching issues</Text>
-              <Text style={styles.emptyText}>
-                Adjust the filters to review more reported campus issues.
-              </Text>
-            </View>
-          )
-        }
-      />
-    </SafeAreaView>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -609,15 +396,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  emptyText: {
-    marginTop: 8,
-    textAlign: 'center',
-    color: '#6B7280',
-    lineHeight: 20,
-  },
+  buttonDisabled: { opacity: 0.7 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
+
