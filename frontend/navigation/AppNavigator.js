@@ -7,6 +7,7 @@ import CommunityDashboard from '../screens/CommunityDashboard';
 import ManagerDashboard from '../screens/ManagerDashboard';
 import WorkerDashboard from '../screens/WorkerDashboard';
 import AdminDashboard from '../screens/AdminDashboard';
+import SubmitIssueScreen from '../screens/SubmitIssue/SubmitIssueScreen';
 import { getToken, getStoredUser } from '../services/api';
 
 const Stack = createNativeStackNavigator();
@@ -78,7 +79,12 @@ export default function AppNavigator() {
       screenOptions={{ headerShown: true }}
     >
       <Stack.Screen name="CommunityDashboard" options={{ title: 'Community' }}>
-        {() => <CommunityDashboard onLogout={() => setUser(null)} />}
+        {(props) => (
+          <CommunityDashboard {...props} onLogout={() => setUser(null)} />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="SubmitIssue" options={{ title: 'Submit issue' }}>
+        {(props) => <SubmitIssueScreen {...props} />}
       </Stack.Screen>
       <Stack.Screen name="ManagerDashboard" options={{ title: 'Manager' }}>
         {() => <ManagerDashboard onLogout={() => setUser(null)} />}
